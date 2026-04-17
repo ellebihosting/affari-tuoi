@@ -1100,6 +1100,25 @@
     if (fallback) fallback();
   }
 
+  // Versione che aspetta il termine prima di resolvere
+  function playBufferAndWait(key, fallbackFn) {
+    const ctx = ensureAudio();
+    if (!ctx) return fallbackFn ? Promise.resolve(fallbackFn()) : Promise.resolve();
+    const buf = audioBuffers[key];
+    if (buf) {
+      return new Promise((resolve) => {
+        const src  = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.3;
+        src.buffer = buf;
+        src.connect(gain).connect(ctx.destination);
+        src.onended = resolve;
+        src.start();
+      });
+    }
+    return fallbackFn ? Promise.resolve(fallbackFn()) : Promise.resolve();
+  }
+
   function beep(freq = 440, dur = 0.12, type = 'sine', vol = 0.03) {
     const ctx = ensureAudio();
     if (!ctx) return;
@@ -1133,13 +1152,18 @@
     try {
       if (el.audioGennarino) {
         el.audioGennarino.currentTime = 0;
-        await el.audioGennarino.play();
+        // Aspetta che l'audio finisca davvero prima di proseguire
+        await new Promise((resolve) => {
+          el.audioGennarino.onended = () => { el.audioGennarino.onended = null; resolve(); };
+          el.audioGennarino.onerror = () => { el.audioGennarino.onerror = null; resolve(); };
+          el.audioGennarino.play().catch(() => resolve());
+        });
         return;
       }
     } catch {}
-    // fallback
+    // fallback beep
     beep(800,.15,'square',.04); await sleep(180);
-    beep(650,.15,'square',.04);
+    beep(650,.15,'square',.04); await sleep(400);
   }
 
   async function playBlackSuspense() {
@@ -1574,15 +1598,16 @@
       ? `Gennarino! +${euro(state.gennarinoBonus)}!`
       : 'È uscito Gennarino!';
     el.gennarinoOverlay.classList.add('show');
+    // Aspetta che l'audio mp3 di Gennarino finisca prima di proseguire
     await playGennarinoBark();
+    await sleep(700);
+    el.gennarinoOverlay.classList.remove('show');
     addLog(`Nel pacco #${c.number} (${c.region}): GENNARINO${state.gennarinoWonJackpot ? ` · jackpot ${euro(state.gennarinoBonus)}` : ''}.`);
     pushHistory(`Pacco #${c.number} · ${c.region}: GENNARINO`);
     setDoctorLine(state.gennarinoWonJackpot
       ? `Gennarino nei primi 3 pacchi: jackpot di ${euro(state.gennarinoBonus)} vinto!`
       : 'Gennarino trovato, ma fuori dalla finestra del jackpot.');
     if (state.gennarinoWonJackpot) launchConfetti(2200);
-    await sleep(2400);
-    el.gennarinoOverlay.classList.remove('show');
   }
 
   // ── Overlay generico ──
@@ -1696,7 +1721,7 @@
         valueClass: 'gold-glow',
         actions: []
       });
-      await sleep(1700);
+      await sleep(3500);
     } else {
       const isRed = c.type === 'red';
       setTVLight(isRed ? 'red' : 'blue');
@@ -1710,7 +1735,7 @@
       });
       await animateCounter(c.realValue, isRed ? 'red-glow' : 'blue-glow', 60);
       if (isRed) soundRed(); else soundBlue();
-      await sleep(1000);
+      await sleep(3000);
     }
 
     addLog(`Hai aperto il pacco #${number} (${c.region}): ${
@@ -1741,11 +1766,15 @@
   // ── Rivela pacco nero ──
   async function revealBlackCase(c) {
     showOverlay({ icon:'⬛', title:'PACCO NERO', sub:'Il suo valore viene svelato adesso...', value:null, actions:[] });
-    await sleep(1800);
+    // Aspetta che tutto il jingle_black mp3 finisca, poi mostra il valore
+    await playBufferAndWait('black', async () => {
+      beep(180,.22,'sawtooth',.03);
+      await sleep(400);
+    });
+    await sleep(600);
     showOverlay({ icon:'⬛', title:'Il Pacco Nero vale', sub:`${c.region} · valore svelato`, value:euro(0), valueClass:'white-glow', actions:[] });
     await animateCounter(c.realValue, 'white-glow', 75);
-    soundBlack();
-    await sleep(1200);
+    await sleep(3000);
     state.blackRevealKnown = true;
   }
 
@@ -1941,7 +1970,7 @@
       } else if (c.isGennarino) {
         setTVLight('blue');
         showOverlay({ icon:'🐶', title:'Tra i restanti: Gennarino', sub:`${c.region}`, value:null, actions:[] });
-        await sleep(1500);
+        await sleep(3500);
         addLog(`Tra i restanti: Gennarino nel pacco #${c.number}.`);
       } else {
         const isRed = c.type === 'red';
@@ -1949,7 +1978,7 @@
         showOverlay({ icon:isRed?'🔴':'🔵', title:`Nel pacco #${c.number} c'era`, sub:`${c.region}`, value:euro(0), valueClass:isRed?'red-glow':'blue-glow', actions:[] });
         await animateCounter(c.realValue, isRed?'red-glow':'blue-glow', 72);
         if (isRed) soundRed(); else soundBlue();
-        await sleep(1400);
+        await sleep(3400);
         addLog(`Tra i restanti: ${euro(c.realValue)} nel pacco #${c.number}.`);
       }
     }
@@ -2207,7 +2236,7 @@
         value: state.gennarinoWonJackpot ? euro(state.gennarinoBonus) : null,
         valueClass: 'gold-glow', actions: []
       });
-      await sleep(1400);
+      await sleep(3400);
       addLog(`${titleText}: Gennarino nel pacco #${c.number}.`);
       pushHistory(`Gennarino pacco #${c.number}`);
     } else {
@@ -2223,7 +2252,7 @@
       });
       await animateCounter(c.realValue, isRed ? 'red-glow' : 'blue-glow', 68);
       if (isRed) soundRed(); else soundBlue();
-      await sleep(1400);
+      await sleep(3400);
       addLog(`${titleText}: ${euro(c.realValue)} (pacco #${c.number}).`);
       pushHistory(`Risultato: ${euro(c.realValue)}`);
     }
