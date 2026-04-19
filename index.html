@@ -810,9 +810,237 @@
       .overlay-actions { flex-direction: column; }
       .overlay-actions .btn { width: 100%; }
     }
+
+    /* ── WHEEL OVERLAY (scelta pacco iniziale) ── */
+    .wheel-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 0%, rgba(29,78,216,0.35) 0%, transparent 55%),
+                  rgba(2, 6, 23, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 80;
+      padding: 20px;
+      gap: 0;
+    }
+    .wheel-overlay.show { display: flex; }
+
+    .wheel-header {
+      text-align: center;
+      margin-bottom: 28px;
+      animation: wheelFadeIn 0.6s ease;
+    }
+    .wheel-header .wh-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 52px);
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #fff 0%, var(--gold2) 60%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .wheel-header .wh-sub {
+      color: var(--muted);
+      font-size: clamp(13px, 2vw, 16px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* Regione annuncio */
+    .region-announce {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      animation: wheelFadeIn 0.5s ease;
+    }
+    .region-announce.show { display: flex; }
+    .region-announce .ra-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .region-announce .ra-name {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 6vw, 58px);
+      letter-spacing: 0.06em;
+      color: var(--gold2);
+      text-shadow: 0 0 40px rgba(253,230,138,0.4);
+      animation: regionPop 0.6s cubic-bezier(0.2,0.9,0.2,1);
+    }
+    .region-announce .ra-hint {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    @keyframes regionPop {
+      from { transform: scale(0.6); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    /* Nastro scorrevole */
+    .wheel-track-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      overflow: hidden;
+      padding: 10px 0;
+    }
+    /* fade ai bordi */
+    .wheel-track-wrapper::before,
+    .wheel-track-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 120px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .wheel-track-wrapper::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(2,6,23,0.96), transparent);
+    }
+    .wheel-track-wrapper::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(2,6,23,0.96), transparent);
+    }
+
+    /* Indicatore centrale */
+    .wheel-track-wrapper .wheel-selector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 110px;
+      height: 110px;
+      border-radius: var(--radius);
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.2), 0 0 30px rgba(245,158,11,0.3);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .wheel-track {
+      display: flex;
+      gap: 14px;
+      padding: 8px 50%;
+      will-change: transform;
+      /* animazione scorrimento */
+    }
+    .wheel-track.spinning {
+      transition: none;
+    }
+
+    .wheel-case {
+      flex-shrink: 0;
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      background: linear-gradient(160deg, rgba(29,78,216,0.92), rgba(37,99,235,0.68));
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      user-select: none;
+    }
+    .wheel-case:hover {
+      transform: scale(1.06);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.5);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .wheel-case.selected {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.5), 0 18px 36px rgba(245,158,11,0.25);
+      transform: scale(1.1);
+    }
+
+    /* etichetta che nasconde il numero */
+    .wheel-case .wc-sticker {
+      position: absolute;
+      inset: 8px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: rgba(255,255,255,0.4);
+      transition: opacity 0.4s ease;
+    }
+    .wheel-case.revealed .wc-sticker {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .wheel-case .wc-number {
+      font-family: var(--font-display);
+      font-size: 40px;
+      letter-spacing: 0.03em;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.2s;
+      position: absolute;
+    }
+    .wheel-case.revealed .wc-number { opacity: 1; }
+
+    .wheel-hint {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+      animation: wheelFadeIn 0.6s ease 0.4s both;
+      min-height: 20px;
+    }
+
+    /* stato bloccato dopo scelta */
+    .wheel-track.locked .wheel-case:not(.selected) {
+      opacity: 0.3;
+      transform: scale(0.92);
+      cursor: default;
+      pointer-events: none;
+    }
+
+    @keyframes wheelFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
+
+  <!-- WHEEL OVERLAY: scelta pacco iniziale -->
+  <div class="wheel-overlay" id="wheelOverlay">
+    <div class="wheel-header">
+      <div class="wh-title">AFFARI TUOI</div>
+      <div class="wh-sub" id="wheelSubTitle">Scegli il tuo pacco</div>
+    </div>
+    <div class="region-announce" id="regionAnnounce">
+      <div class="ra-label">Stasera si gioca per la regione</div>
+      <div class="ra-name" id="regionAnnounceName"></div>
+      <div class="ra-hint" id="regionAnnounceHint">Scegli il pacco con cui vuoi giocare</div>
+    </div>
+    <div class="wheel-track-wrapper">
+      <div class="wheel-selector"></div>
+      <div class="wheel-track" id="wheelTrack"></div>
+    </div>
+    <div class="wheel-hint" id="wheelHint">I pacchi stanno scorrendo...</div>
+  </div>
+
   <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
 
   <div class="app">
@@ -984,7 +1212,7 @@
   //  STATO
   // ═══════════════════════════════════════════════════════
   const state = {
-    mode: 'classic', doctorType: 'prudente', phase: 'choose',
+    mode: 'classic', doctorType: 'prudente', phase: 'choose', playerRegion: '',
     cases: [], playerCase: null,
     roundIndex: 0, openingsInRound: 0, roundPlan: [6,3,3,3,3],
     doctorCalls: 0, bankerAction: null, currentOffer: null,
@@ -1039,7 +1267,14 @@
     audioGennarino:       document.getElementById('audioGennarino'),
     roundProgress:        document.getElementById('roundProgress'),
     roundDots:            document.getElementById('roundDots'),
-    confettiCanvas:       document.getElementById('confettiCanvas')
+    confettiCanvas:       document.getElementById('confettiCanvas'),
+    wheelOverlay:         document.getElementById('wheelOverlay'),
+    wheelTrack:           document.getElementById('wheelTrack'),
+    wheelHint:            document.getElementById('wheelHint'),
+    wheelSubTitle:        document.getElementById('wheelSubTitle'),
+    regionAnnounce:       document.getElementById('regionAnnounce'),
+    regionAnnounceName:   document.getElementById('regionAnnounceName'),
+    regionAnnounceHint:   document.getElementById('regionAnnounceHint')
   };
 
   // ═══════════════════════════════════════════════════════
@@ -1369,6 +1604,9 @@
     });
 
     state.luckyRegion  = REGIONS[Math.floor(Math.random() * REGIONS.length)];
+    // Regione del concorrente (estratta dal notaio, è la regione del pacco che sceglierà)
+    // Viene mostrata prima della scelta, poi aggiornata con quella reale al momento della scelta
+    state.playerRegion = REGIONS[Math.floor(Math.random() * REGIONS.length)];
     state.gennarinoCase = state.cases.find(c => c.isGennarino)?.number ?? null;
   }
 
@@ -1382,7 +1620,7 @@
       : el.doctorSelect.value;
 
     Object.assign(state, {
-      phase: 'choose', playerCase: null, roundIndex: 0, openingsInRound: 0,
+      phase: 'choose', playerCase: null, playerRegion: '', roundIndex: 0, openingsInRound: 0,
       roundPlan: roundPlanForMode(state.mode), doctorCalls: 0, bankerAction: null,
       currentOffer: null, log: [], doctorHistory: [], busy: false,
       acceptedOffer: false, mandatorySwapShown: false, blackRevealKnown: false,
@@ -1393,13 +1631,15 @@
     });
 
     makeCases();
-    addLog('Nuova partita iniziata. Scegli il tuo pacco iniziale.');
+    addLog('Nuova partita iniziata.');
     addLog(`Jackpot Gennarino: ${euro(state.gennarinoJackpot)} se esce nei primi 3 pacchi aperti.`);
     setDoctorLine('Il Dottore osserva in silenzio. Tutto parte dalla tua prima scelta.');
     closeOverlay();
     setTVLight('');
     render();
     await preloadAudio();
+    // Mostra la ruota per la scelta del pacco iniziale
+    await showWheelAndChoose();
   }
 
   // ═══════════════════════════════════════════════════════
@@ -1437,7 +1677,7 @@
     for (const c of state.cases) {
       const isPlayerCase = state.playerCase === c.number;
       const canClick = !state.busy && (
-        (state.phase === 'choose' && !c.opened) ||
+        // fase 'choose' rimossa: la scelta avviene solo tramite la ruota
         (state.phase === 'opening' && !c.opened && !isPlayerCase) ||
         (state.phase === 'swap_select' && !c.opened && !isPlayerCase)
       );
@@ -1454,11 +1694,9 @@
       const backLabel = c.opened
         ? (c.isBlack ? 'PACCO NERO' : (c.isGennarino ? gennarinoBoardLabel() : euro(c.realValue)))
         : '';
-      const hintText = state.phase === 'choose'
-        ? 'Scegli'
-        : state.phase === 'swap_select'
-          ? 'Scambia'
-          : isPlayerCase ? 'TUO' : 'Apri';
+      const hintText = state.phase === 'swap_select'
+        ? 'Scambia'
+        : isPlayerCase ? 'TUO' : 'Apri';
 
       card.innerHTML = `
         <div class="case-inner">
@@ -1647,10 +1885,182 @@
   // ═══════════════════════════════════════════════════════
 
   // ── Scelta pacco iniziale ──
+
+  // ═══════════════════════════════════════════════════════
+  //  WHEEL: scelta pacco con nastro animato
+  // ═══════════════════════════════════════════════════════
+
+  async function showWheelAndChoose() {
+    // Pulisci e mostra overlay
+    el.wheelTrack.innerHTML = '';
+    el.regionAnnounce.classList.remove('show');
+    el.wheelHint.textContent = 'I pacchi stanno scorrendo...';
+    el.wheelSubTitle.textContent = 'Un momento...';
+    el.wheelOverlay.classList.add('show');
+
+    await sleep(200);
+
+    // ── Fase 1: annuncio regione del giocatore ──
+    el.wheelSubTitle.textContent = 'La regione di stasera';
+    el.regionAnnounceName.textContent = state.playerRegion;
+    el.regionAnnounce.classList.add('show');
+    // suono solenne
+    beep(440, 0.12, 'triangle', 0.04);
+    await sleep(150);
+    beep(550, 0.18, 'triangle', 0.04);
+    await sleep(2800);
+
+    // ── Fase 2: costruisci nastro con pacchi anonimi ──
+    el.wheelSubTitle.textContent = 'Scegli il tuo pacco';
+    el.regionAnnounce.classList.remove('show');
+    await sleep(400);
+
+    // Crea array di 20 slot + duplicati per effetto infinito
+    const caseNums = state.cases.map(c => c.number);
+    // Triplica per avere abbastanza elementi per l'animazione
+    const allSlots = [...shuffle([...caseNums]), ...shuffle([...caseNums]), ...shuffle([...caseNums])];
+
+    el.wheelTrack.innerHTML = '';
+    for (const num of allSlots) {
+      const div = document.createElement('div');
+      div.className = 'wheel-case';
+      div.dataset.num = num;
+      div.innerHTML = `
+        <div class="wc-sticker">📦</div>
+        <div class="wc-number">${num}</div>`;
+      el.wheelTrack.appendChild(div);
+    }
+
+    // ── Fase 3: animazione scorrimento ──
+    const caseW    = 114; // 100px + 14px gap
+    const track    = el.wheelTrack;
+    const totalW   = allSlots.length * caseW;
+    let   pos      = 0;
+    let   speed    = 18;       // px per frame (veloce)
+    let   stopping = false;
+    let   stopped  = false;
+    let   targetPos = 0;
+    let   animId;
+
+    el.wheelHint.textContent = 'Tocca un pacco per fermarlo!';
+
+    function getVisibleCenter() {
+      const wrapW   = track.parentElement.offsetWidth;
+      const centerX = wrapW / 2;
+      // offset = pos corrente + metà wrapper
+      // indice elemento al centro
+      const rawIdx  = (pos + centerX - 50) / caseW;
+      return Math.round(rawIdx);
+    }
+
+    function animateScroll() {
+      if (stopped) return;
+      if (!stopping) {
+        pos = (pos + speed) % totalW;
+        track.style.transform = `translateX(-${pos}px)`;
+      } else {
+        // decelera verso targetPos
+        const diff = targetPos - pos;
+        if (Math.abs(diff) < 1.5) {
+          pos = targetPos;
+          track.style.transform = `translateX(-${pos}px)`;
+          stopped = true;
+          onWheelStopped();
+          return;
+        }
+        pos += diff * 0.10;
+        track.style.transform = `translateX(-${pos}px)`;
+      }
+      animId = requestAnimationFrame(animateScroll);
+    }
+
+    animId = requestAnimationFrame(animateScroll);
+
+    // ── Fase 4: click su un pacco per fermarlo ──
+    function onCaseClick(e) {
+      if (stopping || stopped) return;
+      const caseEl = e.target.closest('.wheel-case');
+      if (!caseEl) return;
+
+      stopping = true;
+      // Trova l'elemento più vicino al centro visivo
+      const wrapW   = track.parentElement.offsetWidth;
+      const centerX = wrapW / 2;
+      // Calcola quale slot è più vicino al cursore del selettore centrale
+      const slots   = [...track.querySelectorAll('.wheel-case')];
+      // scegli lo slot cliccato ma arrotonda al centro
+      const caseIdx = slots.indexOf(caseEl);
+      // porta quell'elemento esattamente al centro
+      targetPos     = caseIdx * caseW - (centerX - 50);
+      if (targetPos < 0) targetPos = 0;
+    }
+
+    track.addEventListener('click', onCaseClick);
+
+    // Aspetta che si fermi
+    await new Promise(resolve => {
+      const check = setInterval(() => {
+        if (stopped) { clearInterval(check); resolve(); }
+      }, 80);
+    });
+
+    cancelAnimationFrame(animId);
+    track.removeEventListener('click', onCaseClick);
+
+    // ── Fase 5: identifica il pacco al centro ──
+    async function onWheelStopped() {}  // placeholder, gestito sotto
+
+    const wrapW      = track.parentElement.offsetWidth;
+    const centerX    = pos + wrapW / 2 - 50;
+    const centerIdx  = Math.round(centerX / caseW);
+    const clampedIdx = Math.max(0, Math.min(allSlots.length - 1, centerIdx));
+    const chosenNum  = allSlots[clampedIdx];
+
+    // Evidenzia il pacco scelto
+    const slots = [...track.querySelectorAll('.wheel-case')];
+    slots.forEach((s, i) => {
+      if (i === clampedIdx) s.classList.add('selected');
+    });
+    track.classList.add('locked');
+
+    const chosenCase = state.cases.find(c => c.number === chosenNum);
+    el.wheelHint.textContent = `Hai scelto un pacco!`;
+    beep(600, 0.1, 'triangle', 0.04);
+    await sleep(200);
+    beep(800, 0.15, 'triangle', 0.04);
+    await sleep(700);
+
+    // ── Fase 6: reveal del numero (stacca etichetta) ──
+    el.wheelHint.textContent = 'Si rivela il numero...';
+    await sleep(500);
+
+    const selectedEl = slots[clampedIdx];
+    selectedEl.classList.add('revealed');
+
+    // Effetto sonoro reveal
+    beep(440, 0.08, 'sine', 0.04);
+    await sleep(120);
+    beep(660, 0.12, 'sine', 0.04);
+    await sleep(120);
+    beep(880, 0.18, 'triangle', 0.04);
+    await sleep(800);
+
+    el.wheelHint.textContent = `Pacco #${chosenNum} · ${chosenCase.region}`;
+    await sleep(1800);
+
+    // ── Fase 7: chiudi overlay e avvia gioco ──
+    el.wheelOverlay.classList.remove('show');
+    el.wheelTrack.innerHTML = '';
+    await sleep(300);
+
+    choosePlayerCase(chosenNum);
+  }
+
   function choosePlayerCase(number) {
-    state.playerCase = number;
-    state.phase      = 'opening';
+    state.playerCase   = number;
+    state.phase        = 'opening';
     const c = state.cases.find(x => x.number === number);
+    state.playerRegion = c.region; // aggiorna con la regione reale del pacco
     addLog(`Hai scelto il pacco #${number} (${c.region}) come tuo pacco.`);
     addLog(`Round 1: apri ${currentRoundTarget()} pacchi prima della chiamata.`);
     addLog(`Jackpot Gennarino: ${euro(state.gennarinoJackpot)} se lo trovi nei primi 3 pacchi aperti.`);
