@@ -1,7 +1,3 @@
-// vecchio
-const CACHE_NAME = 'affari-tuoi-v10';
-
-// nuovo (incrementa il numero ad ogni modifica)
 const CACHE_NAME = 'affari-tuoi-v11';
 
 const ASSETS = [
