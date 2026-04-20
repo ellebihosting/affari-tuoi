@@ -2026,7 +2026,8 @@
 
     const wrapW      = track.parentElement.offsetWidth;
     const centerX    = pos + wrapW / 2 - 50;
-    const centerIdx  = Math.round(centerX / caseW);
+	const centerIdx  = Math.round((pos - caseW / 2) / caseW) - 1;
+    //const centerIdx  = Math.round(centerX / caseW);
     const clampedIdx = Math.max(0, Math.min(allSlots.length - 1, centerIdx));
     const chosenNum  = allSlots[clampedIdx];
 
