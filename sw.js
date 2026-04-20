@@ -1,4 +1,4 @@
-const CACHE_NAME = 'affari-tuoi-v12';
+const CACHE_NAME = 'affari-tuoi-v12.1';
 
 const ASSETS = [
   './',
