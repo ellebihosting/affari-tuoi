@@ -549,13 +549,14 @@
       height: 36%;
       border-radius: var(--radius) var(--radius) 0 0;
       transform-origin: top center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.17), rgba(255,255,255,0.03));
-      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06));
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.35);
       z-index: 3;
-      transition: transform 0.88s cubic-bezier(0.2,0.9,0.2,1), opacity 0.88s ease;
+      transition: transform 1.6s cubic-bezier(0.25, 0.85, 0.3, 1), opacity 1.6s ease;
     }
     .center-case-shell.opening .center-case-lid {
-      transform: rotateX(120deg) translateY(-14px);
+      transform: rotateX(125deg) translateY(-18px);
       opacity: 0;
     }
 
@@ -1818,9 +1819,11 @@
     el.centerCaseShell.classList.remove('opening');
     el.centerRevealOverlay.classList.add('show');
     void el.centerCaseShell.offsetWidth;
-    await sleep(130);
+    // Pausa più lunga per far vedere il pacco chiuso con coperchio ben evidente
+    await sleep(700);
     el.centerCaseShell.classList.add('opening');
-    await sleep(1000);
+    // Attesa che copre l'intera animazione di apertura (transizione CSS 1.6s)
+    await sleep(1900);
   }
 
   function hideCenterCaseReveal() {
@@ -1845,7 +1848,7 @@
     setDoctorLine(state.gennarinoWonJackpot
       ? `Gennarino nei primi 3 pacchi: jackpot di ${euro(state.gennarinoBonus)} vinto!`
       : 'Gennarino trovato, ma fuori dalla finestra del jackpot.');
-    if (state.gennarinoWonJackpot) launchConfetti(2200);
+    if (state.gennarinoWonJackpot && state.gennarinoBonus > 10000) launchConfetti(2200);
   }
 
   // ── Overlay generico ──
@@ -1936,7 +1939,7 @@
     const track    = el.wheelTrack;
     const totalW   = allSlots.length * caseW;
     let   pos      = 0;
-    let   speed    = 2;        // px per frame — lento e leggibile
+    let   speed    = 5;        // px per frame — lento e leggibile
     let   stopping = false;
     let   stopped  = false;
     let   targetPos = 0;
@@ -1975,34 +1978,35 @@
       if (!caseEl) return;
 
       stopping = true;
-      const wrapW   = track.parentElement.offsetWidth;
-      const centerX = wrapW / 2;
       const slots   = [...track.querySelectorAll('.wheel-case')];
       const caseIdx = slots.indexOf(caseEl);
 
-      // FIX: targetPos deve essere SEMPRE avanti rispetto alla pos corrente.
-      // Calcoliamo la posizione ideale di questo slot al centro.
-      let ideal = caseIdx * caseW - (centerX - 50);
+      // CALCOLO CORRETTO (tenendo conto del padding 50% della track):
+      // Per portare lo slot i al centro del wrapper, pos deve valere:
+      //   posTarget = i * caseW + caseW/2
+      // (perché track ha padding-left = wrapW/2 e il centro visivo è a pos + wrapW/2)
+      function idealPosFor(idx) {
+        return idx * caseW + caseW / 2;
+      }
 
-      // Se ideal è dietro o troppo vicino a pos, cerchiamo la prossima
+      let ideal = idealPosFor(caseIdx);
+
+      // Se ideal è dietro o troppo vicino a pos, cerca la prossima
       // occorrenza dello stesso numero di pacco più avanti nel nastro.
-      if (ideal <= pos + 10) {
+      if (ideal <= pos + caseW) {
         const targetNum = caseEl.dataset.num;
-        // Cerca un altro slot con lo stesso numero che sia avanti
         let bestIdx = -1;
         for (let i = 0; i < slots.length; i++) {
           if (slots[i].dataset.num === targetNum) {
-            const candidate = i * caseW - (centerX - 50);
-            if (candidate > pos + caseW * 2) {
+            if (idealPosFor(i) > pos + caseW * 2) {
               bestIdx = i;
               break;
             }
           }
         }
         if (bestIdx >= 0) {
-          ideal = bestIdx * caseW - (centerX - 50);
+          ideal = idealPosFor(bestIdx);
         } else {
-          // Nessun duplicato avanti: aggiungi un giro completo
           ideal += totalW;
         }
       }
@@ -2022,12 +2026,9 @@
     track.removeEventListener('click', onCaseClick);
 
     // ── Fase 5: identifica il pacco al centro ──
-    async function onWheelStopped() {}  // placeholder, gestito sotto
-
-    const wrapW      = track.parentElement.offsetWidth;
-    const centerX    = pos + wrapW / 2 - 50;
-	const centerIdx  = Math.round((pos - caseW / 2) / caseW) - 1;
-    //const centerIdx  = Math.round(centerX / caseW);
+    // Con padding 50% sulla track, lo slot i è centrato quando pos = i*caseW + caseW/2
+    // quindi: i = (pos - caseW/2) / caseW
+    const centerIdx  = Math.round((pos - caseW / 2) / caseW);
     const clampedIdx = Math.max(0, Math.min(allSlots.length - 1, centerIdx));
     const chosenNum  = allSlots[clampedIdx];
 
@@ -2427,6 +2428,8 @@
 
     state.phase = 'game_over';
     state.busy  = false;
+    // Coriandoli solo se l'offerta accettata era > 10.000 €
+    if ((state.currentOffer || 0) > 10000) launchConfetti(3500);
     finalizeGennarinoForNextGame();
     render();
     el.overlayActions.replaceChildren(
@@ -2650,7 +2653,9 @@
           : `Partita chiusa. Il tuo risultato finale è ${euro(finalValue)}.`
     );
 
-    if (finalValue >= 100000 || totalWon >= 100000) launchConfetti(3500);
+    // Coriandoli solo per vincite significative (> 10.000 €)
+    const winTotal = totalWon;
+    if (winTotal > 10000) launchConfetti(3500);
 
     state.busy = false;
     finalizeGennarinoForNextGame();
