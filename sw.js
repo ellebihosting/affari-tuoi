@@ -16,7 +16,7 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
- 
+
 // Installazione: mette in cache tutti gli asset
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -25,7 +25,7 @@ self.addEventListener('install', event => {
       .then(() => self.skipWaiting())
   );
 });
- 
+
 // Attivazione: elimina le cache vecchie
 self.addEventListener('activate', event => {
   event.waitUntil(
@@ -38,7 +38,7 @@ self.addEventListener('activate', event => {
     ).then(() => self.clients.claim())
   );
 });
- 
+
 // Fetch: prima dalla cache, poi dalla rete
 self.addEventListener('fetch', event => {
   event.respondWith(
