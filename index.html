@@ -1936,7 +1936,7 @@
     const track    = el.wheelTrack;
     const totalW   = allSlots.length * caseW;
     let   pos      = 0;
-    let   speed    = 18;       // px per frame (veloce)
+    let   speed    = 5;        // px per frame — lento e leggibile
     let   stopping = false;
     let   stopped  = false;
     let   targetPos = 0;
@@ -1944,31 +1944,23 @@
 
     el.wheelHint.textContent = 'Tocca un pacco per fermarlo!';
 
-    function getVisibleCenter() {
-      const wrapW   = track.parentElement.offsetWidth;
-      const centerX = wrapW / 2;
-      // offset = pos corrente + metà wrapper
-      // indice elemento al centro
-      const rawIdx  = (pos + centerX - 50) / caseW;
-      return Math.round(rawIdx);
-    }
-
     function animateScroll() {
       if (stopped) return;
       if (!stopping) {
         pos = (pos + speed) % totalW;
         track.style.transform = `translateX(-${pos}px)`;
       } else {
-        // decelera verso targetPos
+        // decelera verso targetPos che è SEMPRE avanti rispetto a pos
         const diff = targetPos - pos;
-        if (Math.abs(diff) < 1.5) {
+        if (diff < 1.5) {
           pos = targetPos;
           track.style.transform = `translateX(-${pos}px)`;
           stopped = true;
-          onWheelStopped();
           return;
         }
-        pos += diff * 0.10;
+        // rallenta progressivamente: più ci si avvicina più è lento
+        const step = Math.max(1, diff * 0.08);
+        pos += step;
         track.style.transform = `translateX(-${pos}px)`;
       }
       animId = requestAnimationFrame(animateScroll);
@@ -1983,16 +1975,38 @@
       if (!caseEl) return;
 
       stopping = true;
-      // Trova l'elemento più vicino al centro visivo
       const wrapW   = track.parentElement.offsetWidth;
       const centerX = wrapW / 2;
-      // Calcola quale slot è più vicino al cursore del selettore centrale
       const slots   = [...track.querySelectorAll('.wheel-case')];
-      // scegli lo slot cliccato ma arrotonda al centro
       const caseIdx = slots.indexOf(caseEl);
-      // porta quell'elemento esattamente al centro
-      targetPos     = caseIdx * caseW - (centerX - 50);
-      if (targetPos < 0) targetPos = 0;
+
+      // FIX: targetPos deve essere SEMPRE avanti rispetto alla pos corrente.
+      // Calcoliamo la posizione ideale di questo slot al centro.
+      let ideal = caseIdx * caseW - (centerX - 50);
+
+      // Se ideal è dietro o troppo vicino a pos, cerchiamo la prossima
+      // occorrenza dello stesso numero di pacco più avanti nel nastro.
+      if (ideal <= pos + 10) {
+        const targetNum = caseEl.dataset.num;
+        // Cerca un altro slot con lo stesso numero che sia avanti
+        let bestIdx = -1;
+        for (let i = 0; i < slots.length; i++) {
+          if (slots[i].dataset.num === targetNum) {
+            const candidate = i * caseW - (centerX - 50);
+            if (candidate > pos + caseW * 2) {
+              bestIdx = i;
+              break;
+            }
+          }
+        }
+        if (bestIdx >= 0) {
+          ideal = bestIdx * caseW - (centerX - 50);
+        } else {
+          // Nessun duplicato avanti: aggiungi un giro completo
+          ideal += totalW;
+        }
+      }
+      targetPos = ideal;
     }
 
     track.addEventListener('click', onCaseClick);
@@ -2715,4 +2729,3 @@
   </script>
 </body>
 </html>
-
